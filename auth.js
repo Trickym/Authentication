@@ -1,30 +1,45 @@
 const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcrypt");
-let users = {};
+const createDB = require("./config/db");
+const User = require("./models/userModel");
+createDB.sync().then(() => {});
 //SIGNUP
 router.post("/register", async (req, res) => {
   try {
     const { name, email, password } = req.body;
     console.log(name, email, password, "called");
-    const userExist = users.hasOwnProperty(email);
+    const userExist = await User.findOne({
+      where: {
+        email,
+      },
+    });
     if (userExist) res.send("User Already Exists");
     const cryptPassword = await bcrypt.hash(password, 10);
-    users = { ...users, [email]: { name, password: cryptPassword } };
-
-    res.send("Success!");
+    const newUser = {
+      name,
+      email,
+      password: cryptPassword,
+    };
+    const create = await User.create(newUser);
+    return res.status(201).send("Profile Created Successfully!");
   } catch (error) {
-    console.log(error);
+    return res.status(500).send(error.message);
   }
 });
 
 //SIGNIN
-router.post("/login", (req, res) => {
+router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
     console.log(email, password, "login");
-    if (users.hasOwnProperty(email)) {
-      bcrypt.compare(password, users[email].password, (err, res1) => {
+    const userExist = await User.findOne({
+      where: {
+        email,
+      },
+    });
+    if (userExist) {
+      bcrypt.compare(password, userExist.dataValues.password, (err, res1) => {
         if (err) {
           res.send(err);
         } else {
