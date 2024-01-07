@@ -44,7 +44,16 @@ router.post("/login", async (req, res) => {
           res.send(err);
         } else {
           if (res1) {
-            res.send("Logged in Successfully!");
+            res.send({
+              message: "Logged in Successfully!",
+              userData: {
+                email: userExist.dataValues.email,
+                id: userExist.dataValues.id,
+                name: userExist.dataValues.name,
+                createdAt: userExist.dataValues.createdAt,
+                updatedAt: userExist.dataValues.updatedAt,
+              },
+            });
           } else {
             res.send("Wrong username password!");
           }
